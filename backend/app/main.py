@@ -30,7 +30,7 @@ app.include_router(user_router, prefix="/user", tags=["User"])
 
 @app.get("/")
 def root():
-    return {"message": "Chemical Inventory API is running!"}
+    return {"message": "Welcome to Blossoms Aroma"}
 
 @app.get("/health")
 def health_check():
