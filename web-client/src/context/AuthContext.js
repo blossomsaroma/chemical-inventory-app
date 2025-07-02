@@ -14,15 +14,25 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserInfo = async (firebaseUser) => {
     try {
+      console.log('Fetching user info for:', firebaseUser.email);
       const token = await firebaseUser.getIdToken();
+      console.log('Got Firebase token, length:', token.length);
       
       // First try to get user status (works for both approved and pending users)
       const statusRes = await fetch(`${API_BASE}/user/status`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        method: 'GET',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
       });
+      
+      console.log('Status response:', statusRes.status, statusRes.statusText);
       
       if (statusRes.ok) {
         const userData = await statusRes.json();
+        console.log('User data received:', userData);
         setUserInfo(userData);
         setBackendAvailable(true);
         
@@ -30,7 +40,12 @@ export const AuthProvider = ({ children }) => {
         if (userData.is_approved) {
           try {
             const dashboardRes = await fetch(`${API_BASE}/user/dashboard`, {
-              headers: { 'Authorization': `Bearer ${token}` }
+              method: 'GET',
+              headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include'
             });
             if (dashboardRes.ok) {
               const dashboardData = await dashboardRes.json();
@@ -45,12 +60,14 @@ export const AuthProvider = ({ children }) => {
         
         return userData;
       } else {
-        console.warn('Backend returned error:', statusRes.status, statusRes.statusText);
+        const errorText = await statusRes.text();
+        console.warn('Backend returned error:', statusRes.status, statusRes.statusText, errorText);
         setBackendAvailable(false);
         setUserInfo(null);
       }
     } catch (error) {
       console.error('Failed to fetch user info:', error);
+      console.error('Error details:', error.message, error.stack);
       setBackendAvailable(false);
       setUserInfo(null);
     }
